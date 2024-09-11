@@ -16,12 +16,12 @@
     <script>
         function initMap() {
             var map = new google.maps.Map(document.getElementById('map'), {
-                center: new google.maps.LatLng(34.0522, -118.2437),  // Center on Los Angeles
+                center: new google.maps.LatLng(34.0522, -118.2437),  
                 mapTypeId: google.maps.MapTypeId.ROADMAP,
                 zoom: 10
             });
 
-            // Fetch and plot real-time NO2 data on the map
+            // Fetching no2 data
             fetchRealTimeNO2Data().then(no2Data => {
                 no2Data.forEach(function(data) {
                     var color;
@@ -69,8 +69,8 @@
         }
 
         async function fetchRealTimeNO2Data() {
-            // Replace with your actual API endpoint and token
-            const apiUrl = 'https://api.example.com/real-time-no2?token=YOUR_API_TOKEN';
+          
+            const apiUrl = 'https://api.example.com/real-time-no2?token=11b399483e4bdb6f68f41ccea540b5efa905fb93';
 
             const response = await fetch(apiUrl);
             const data = await response.json();
