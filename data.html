@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time NO2 Data on Google Maps</title>
+    <style>
+        #map {
+            height: 380px;
+            width: 100%;
+        }
+    </style>
+    <!-- Google Maps API script with your key -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDtrUm-gU3_JhH1ZiK9R7u00civJW60Jo"></script>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        function initMap() {
+            var map = new google.maps.Map(document.getElementById('map'), {
+                center: new google.maps.LatLng(34.0522, -118.2437),  // Center on Los Angeles
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                zoom: 10
+            });
+
+            // Fetch and plot real-time NO2 data on the map
+            fetchRealTimeNO2Data().then(no2Data => {
+                no2Data.forEach(function(data) {
+                    var color;
+                    if (data.no2 <= 50) {
+                        color = 'green';
+                    } else if (data.no2 <= 100) {
+                        color = 'yellow';
+                    } else if (data.no2 <= 150) {
+                        color = 'orange';
+                    } else {
+                        color = 'red';
+                    }
+
+                    var marker = new google.maps.Marker({
+                        position: {lat: data.lat, lng: data.lng},
+                        map: map,
+                        title: `NO2: ${data.no2} µg/m³\nDate: ${data.date}\nCategory: ${data.category}`,
+                        icon: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`
+                    });
+
+                    var infowindow = new google.maps.InfoWindow({
+                        content: `<div><strong>NO2 Level:</strong> ${data.no2} µg/m³<br><strong>Date:</strong> ${data.date}<br><strong>Category:</strong> ${data.category}</div>`
+                    });
+
+                    marker.addListener('click', function() {
+                        infowindow.open(map, marker);
+                    });
+                });
+            }).catch(error => console.error('Error fetching NO2 data:', error));
+
+            // Add the AQICN overlay for real-time air quality index
+            var waqiMapOverlay = new google.maps.ImageMapType({
+                getTileUrl: function(coord, zoom) {
+                    return 'https://tiles.aqicn.org/tiles/usepa-aqi/' +
+                           zoom + "/" + coord.x + "/" + coord.y +
+                           ".png?token=11b399483e4bdb6f68f41ccea540b5efa905fb93";  // AQICN Token
+                },
+                tileSize: new google.maps.Size(256, 256),
+                maxZoom: 16,
+                minZoom: 8,
+                name: "Air Quality"
+            });
+
+            map.overlayMapTypes.insertAt(0, waqiMapOverlay);
+        }
+
+        async function fetchRealTimeNO2Data() {
+            // Replace with your actual API endpoint and token
+            const apiUrl = 'https://api.example.com/real-time-no2?token=YOUR_API_TOKEN';
+
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+
+            // Process and format data as needed
+            return data.map(entry => ({
+                lat: entry.latitude,
+                lng: entry.longitude,
+                no2: entry.no2_concentration,
+                date: entry.date,
+                category: categorizeNO2(entry.no2_concentration)
+            }));
+        }
+
+        function categorizeNO2(no2) {
+            if (no2 <= 50) {
+                return 'Good';
+            } else if (no2 <= 100) {
+                return 'Moderate';
+            } else if (no2 <= 150) {
+                return 'Unhealthy for Sensitive Groups';
+            } else if (no2 <= 200) {
+                return 'Unhealthy';
+            } else {
+                return 'Very Unhealthy';
+            }
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>
